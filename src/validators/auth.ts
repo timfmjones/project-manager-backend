@@ -9,3 +9,7 @@ export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
+
+export const googleSignInSchema = z.object({
+  idToken: z.string().min(1),
+});

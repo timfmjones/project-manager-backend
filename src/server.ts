@@ -35,16 +35,26 @@ app.use(cors({
 
 app.use(express.json());
 
+// Request logging middleware (for debugging)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`, req.headers.authorization ? 'with auth' : 'no auth');
+  next();
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     supabase: env.SUPABASE_URL ? 'configured' : 'not configured',
-    storage: env.USE_SUPABASE_STORAGE ? 'supabase' : 'local'
+    storage: env.USE_SUPABASE_STORAGE ? 'supabase' : 'local',
+    firebase: env.FIREBASE_PROJECT_ID ? 'configured' : 'not configured',
   });
 });
 
+// Auth routes (no authentication required)
 app.use('/api/auth', authRoutes);
+
+// Protected routes (authentication required)
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects', summaryRoutes);
 app.use('/api/projects', ideaDumpRoutes);
@@ -53,10 +63,12 @@ app.use('/api/projects', taskRoutes);
 app.use('/api/projects', milestoneRoutes);
 app.use('/api/projects', aiRoutes);
 
+// Error handler must be last
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Using ${env.USE_SUPABASE_STORAGE ? 'Supabase' : 'local'} storage`);
   console.log(`Connected to Supabase: ${env.SUPABASE_URL}`);
+  console.log(`Firebase: ${env.FIREBASE_PROJECT_ID ? 'Configured' : 'Not configured'}`);
 });
