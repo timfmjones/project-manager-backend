@@ -1,3 +1,4 @@
+// src/server.ts
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -9,8 +10,11 @@ import projectRoutes from './routes/projects';
 import summaryRoutes from './routes/summary';
 import ideaDumpRoutes from './routes/ideaDumps';
 import insightRoutes from './routes/insights';
-import taskRoutes from './routes/tasks';
+import insightRoutesIndividual from './routes/insightRoutes';
+import tasksRoutes from './routes/tasks';
+import taskRoutesIndividual from './routes/taskRoutes';
 import milestoneRoutes from './routes/milestones';
+import milestoneRoutesIndividual from './routes/milestoneRoutes';
 import aiRoutes from './routes/ai';
 import { env } from './env';
 
@@ -54,14 +58,19 @@ app.get('/health', (req, res) => {
 // Auth routes (no authentication required)
 app.use('/api/auth', authRoutes);
 
-// Protected routes (authentication required)
-app.use('/api/projects', projectRoutes);
-app.use('/api/projects', summaryRoutes);
-app.use('/api/projects', ideaDumpRoutes);
-app.use('/api/projects', insightRoutes);
-app.use('/api/projects', taskRoutes);
-app.use('/api/projects', milestoneRoutes);
-app.use('/api/projects', aiRoutes);
+// Individual resource routes (for operations on specific items)
+app.use('/api/tasks', taskRoutesIndividual);        // PATCH/DELETE /api/tasks/:id
+app.use('/api/milestones', milestoneRoutesIndividual); // PATCH/DELETE /api/milestones/:id
+app.use('/api/insights', insightRoutesIndividual);    // PATCH /api/insights/:id/pin
+
+// Project-related routes (all under /api/projects)
+app.use('/api/projects', projectRoutes);      // GET/POST/PATCH /api/projects
+app.use('/api/projects', summaryRoutes);      // GET/PATCH /api/projects/:id/summary
+app.use('/api/projects', ideaDumpRoutes);     // POST /api/projects/:id/idea-dumps
+app.use('/api/projects', insightRoutes);      // GET /api/projects/:id/insights
+app.use('/api/projects', tasksRoutes);        // GET/POST /api/projects/:id/tasks
+app.use('/api/projects', milestoneRoutes);    // GET/POST /api/projects/:id/milestones
+app.use('/api/projects', aiRoutes);           // POST /api/projects/:id/summary/suggest
 
 // Error handler must be last
 app.use(errorHandler);

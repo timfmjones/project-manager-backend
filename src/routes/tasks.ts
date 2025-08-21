@@ -1,10 +1,12 @@
+// src/routes/tasks.ts
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { createTaskSchema, updateTaskSchema, reorderTasksSchema } from '../validators/task';
+import { createTaskSchema, reorderTasksSchema } from '../validators/task';
 
 const router = Router();
 
+// GET /api/projects/:id/tasks
 router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const project = await prisma.project.findFirst({
@@ -26,6 +28,7 @@ router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) 
   }
 });
 
+// POST /api/projects/:id/tasks
 router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const { title, description, status } = createTaskSchema.parse(req.body);
@@ -54,39 +57,7 @@ router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next)
   }
 });
 
-router.patch('/tasks/:id', authenticateToken, async (req: AuthRequest, res, next) => {
-  try {
-    const { title, description, status, position } = updateTaskSchema.parse(req.body);
-    
-    const task = await prisma.task.findFirst({
-      where: { id: req.params.id },
-      include: {
-        project: {
-          select: { userId: true },
-        },
-      },
-    });
-    
-    if (!task || task.project.userId !== req.userId) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    
-    const updated = await prisma.task.update({
-      where: { id: req.params.id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(description !== undefined && { description }),
-        ...(status !== undefined && { status }),
-        ...(position !== undefined && { position }),
-      },
-    });
-    
-    res.json(updated);
-  } catch (error) {
-    next(error);
-  }
-});
-
+// PATCH /api/projects/:id/tasks/reorder
 router.patch('/:id/tasks/reorder', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const { orderedIds } = reorderTasksSchema.parse(req.body);
