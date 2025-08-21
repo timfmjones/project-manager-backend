@@ -38,9 +38,9 @@ router.post('/:id/summary/suggest', authenticateToken, aiLimiter, async (req: Au
     
     const suggestedSummary = await suggestSummaryUpdate(recentInsights);
     
-    res.json({ suggestedSummary });
+    return res.json({ suggestedSummary });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

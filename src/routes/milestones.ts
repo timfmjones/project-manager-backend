@@ -22,9 +22,9 @@ router.get('/:id/milestones', authenticateToken, async (req: AuthRequest, res, n
       orderBy: { dueDate: 'asc' },
     });
     
-    res.json(milestones);
+    return res.json(milestones);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -78,10 +78,10 @@ router.post('/:id/milestones', authenticateToken, async (req: AuthRequest, res, 
       },
     });
     
-    res.json(milestone);
+    return res.json(milestone);
   } catch (error) {
     console.error('Milestone creation error:', error);
-    next(error);
+    return next(error);
   }
 });
 

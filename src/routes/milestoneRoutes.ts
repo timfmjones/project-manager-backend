@@ -4,10 +4,10 @@ import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { updateMilestoneSchema } from '../validators/milestone';
 
-const router = Router();
+const routerMilestoneRoutes = Router();
 
 // PATCH /api/milestones/:id
-router.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
+routerMilestoneRoutes.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     console.log('Updating milestone with data:', req.body); // Debug log
     
@@ -66,15 +66,15 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
       data: updateData,
     });
     
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
     console.error('Milestone update error:', error);
-    next(error);
+    return next(error);
   }
 });
 
 // DELETE /api/milestones/:id
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
+routerMilestoneRoutes.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const milestone = await prisma.milestone.findFirst({
       where: { id: req.params.id },
@@ -93,11 +93,11 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => 
       where: { id: req.params.id },
     });
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
     console.error('Milestone deletion error:', error);
-    next(error);
+    return next(error);
   }
 });
 
-export default router;
+export default routerMilestoneRoutes;

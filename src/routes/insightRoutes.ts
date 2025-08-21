@@ -30,9 +30,9 @@ router.patch('/:id/pin', authenticateToken, async (req: AuthRequest, res, next) 
       data: { pinned },
     });
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

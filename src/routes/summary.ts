@@ -1,3 +1,4 @@
+// src/routes/summary.ts
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
@@ -19,9 +20,9 @@ router.get('/:id/summary', authenticateToken, async (req: AuthRequest, res, next
       return res.status(404).json({ error: 'Project not found' });
     }
     
-    res.json({ summaryBanner: project.summaryBanner });
+    return res.json({ summaryBanner: project.summaryBanner });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -41,9 +42,9 @@ router.patch('/:id/summary', authenticateToken, async (req: AuthRequest, res, ne
       return res.status(404).json({ error: 'Project not found' });
     }
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

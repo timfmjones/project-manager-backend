@@ -4,10 +4,10 @@ import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { updateTaskSchema } from '../validators/task';
 
-const router = Router();
+const routerTaskRoutes = Router();
 
 // PATCH /api/tasks/:id
-router.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
+routerTaskRoutes.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const { title, description, status, position } = updateTaskSchema.parse(req.body);
     
@@ -34,14 +34,14 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
       },
     });
     
-    res.json(updated);
+    return res.json(updated);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
 // DELETE /api/tasks/:id
-router.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
+routerTaskRoutes.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const task = await prisma.task.findFirst({
       where: { id: req.params.id },
@@ -60,10 +60,10 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res, next) => 
       where: { id: req.params.id },
     });
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-export default router;
+export default routerTaskRoutes;

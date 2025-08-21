@@ -6,10 +6,10 @@ import { Request, Response, NextFunction } from 'express';
 
 // Local storage configuration
 const localStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, env.UPLOAD_DIR);
   },
-  filename: (req, file, cb) => {
+  filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
@@ -23,7 +23,7 @@ export const upload = multer({
   limits: {
     fileSize: 25 * 1024 * 1024, // 25MB limit
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     // Extended list of audio MIME types including webm
     const allowedMimes = [
       'audio/mpeg',
@@ -74,7 +74,7 @@ export async function handleSupabaseUpload(
     const filePath = `audio/${fileName}`;
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(env.SUPABASE_STORAGE_BUCKET)
       .upload(filePath, file.buffer, {
         contentType: file.mimetype || 'audio/webm',

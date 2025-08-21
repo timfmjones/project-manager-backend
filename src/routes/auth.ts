@@ -23,9 +23,9 @@ router.post('/register', async (req, res, next) => {
     });
 
     const token = generateToken(user.id);
-    res.json({ token, user: { id: user.id, email: user.email } });
+    return res.json({ token, user: { id: user.id, email: user.email } });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -44,9 +44,9 @@ router.post('/login', async (req, res, next) => {
     }
 
     const token = generateToken(user.id);
-    res.json({ token, user: { id: user.id, email: user.email } });
+    return res.json({ token, user: { id: user.id, email: user.email } });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -56,7 +56,7 @@ router.post('/google', async (req, res, next) => {
     
     // Verify the Firebase ID token
     const decodedToken = await verifyIdToken(idToken);
-    const { uid, email, name, picture } = decodedToken;
+    const { email, name, picture } = decodedToken;
     
     if (!email) {
       return res.status(400).json({ error: 'No email associated with this Google account' });
@@ -85,7 +85,7 @@ router.post('/google', async (req, res, next) => {
     }
     
     const token = generateToken(user.id);
-    res.json({ 
+    return res.json({ 
       token, 
       user: { 
         id: user.id, 
@@ -100,11 +100,11 @@ router.post('/google', async (req, res, next) => {
     if (error instanceof Error && error.message === 'Invalid authentication token') {
       return res.status(401).json({ error: 'Invalid Google authentication token' });
     }
-    next(error);
+    return next(error);
   }
 });
 
-router.post('/guest', async (req, res, next) => {
+router.post('/guest', async (_req, res, next) => {
   try {
     const guestEmail = `guest-${Date.now()}@temp.local`;
     const user = await prisma.user.create({
@@ -112,9 +112,9 @@ router.post('/guest', async (req, res, next) => {
     });
 
     const token = generateToken(user.id);
-    res.json({ token, user: { id: user.id, email: guestEmail, isGuest: true } });
+    return res.json({ token, user: { id: user.id, email: guestEmail, isGuest: true } });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -129,9 +129,9 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res, next) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(user);
+    return res.json(user);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

@@ -4,10 +4,10 @@ import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { createTaskSchema, reorderTasksSchema } from '../validators/task';
 
-const router = Router();
+const routerTasks = Router();
 
 // GET /api/projects/:id/tasks
-router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
+routerTasks.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const project = await prisma.project.findFirst({
       where: { id: req.params.id, userId: req.userId },
@@ -22,14 +22,14 @@ router.get('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) 
       orderBy: { position: 'asc' },
     });
     
-    res.json(tasks);
+    return res.json(tasks);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
 // POST /api/projects/:id/tasks
-router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
+routerTasks.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const { title, description, status } = createTaskSchema.parse(req.body);
     
@@ -51,14 +51,14 @@ router.post('/:id/tasks', authenticateToken, async (req: AuthRequest, res, next)
       },
     });
     
-    res.json(task);
+    return res.json(task);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
 // PATCH /api/projects/:id/tasks/reorder
-router.patch('/:id/tasks/reorder', authenticateToken, async (req: AuthRequest, res, next) => {
+routerTasks.patch('/:id/tasks/reorder', authenticateToken, async (req: AuthRequest, res, next) => {
   try {
     const { orderedIds } = reorderTasksSchema.parse(req.body);
     
@@ -79,10 +79,10 @@ router.patch('/:id/tasks/reorder', authenticateToken, async (req: AuthRequest, r
     
     await prisma.$transaction(updates);
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-export default router;
+export default routerTasks;

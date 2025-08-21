@@ -1,11 +1,9 @@
 import { Router } from 'express';
-import path from 'path';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { upload, handleSupabaseUpload } from '../middleware/upload';
 import { createTextIdeaDumpSchema } from '../validators/ideaDump';
 import { transcribeAudio, generateInsight } from '../config/openai';
-import { env } from '../env';
 
 const router = Router();
 
@@ -53,9 +51,9 @@ router.post('/:id/idea-dumps/text', authenticateToken, async (req: AuthRequest, 
       await prisma.task.createMany({ data: tasks });
     }
     
-    res.json({ ideaDump, insight });
+    return res.json({ ideaDump, insight });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -118,9 +116,9 @@ router.post(
         await prisma.task.createMany({ data: tasks });
       }
       
-      res.json({ ideaDump, insight });
+      return res.json({ ideaDump, insight });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );

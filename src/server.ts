@@ -44,7 +44,7 @@ app.use(cors(corsOptions));
 
 // Security headers for production
 if (!isDevelopment) {
-  app.use((req, res, next) => {
+  app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -56,14 +56,14 @@ app.use(express.json());
 
 // Request logging middleware (for debugging)
 if (isDevelopment) {
-  app.use((req, res, next) => {
+  app.use((req, _res, next) => {
     console.log(`${req.method} ${req.path}`, req.headers.authorization ? 'with auth' : 'no auth');
     next();
   });
 }
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ 
     status: 'ok', 
     environment: process.env.NODE_ENV || 'development',
@@ -75,7 +75,7 @@ app.get('/health', (req, res) => {
 });
 
 // Metrics endpoint for monitoring
-app.get('/metrics', (req, res) => {
+app.get('/metrics', (_req, res) => {
   res.json({
     uptime: process.uptime(),
     memory: process.memoryUsage(),
@@ -102,7 +102,7 @@ app.use('/api/projects', milestoneRoutes);    // GET/POST /api/projects/:id/mile
 app.use('/api/projects', aiRoutes);           // POST /api/projects/:id/summary/suggest
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

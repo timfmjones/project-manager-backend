@@ -1,14 +1,15 @@
+// src/routes/projects.ts
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
 import { createProjectSchema, updateProjectSchema } from '../validators/project';
 
-const router = Router();
+const routerProjects = Router();
 
 // All routes use authenticateToken middleware
-router.use(authenticateToken);
+routerProjects.use(authenticateToken);
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+routerProjects.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ error: 'User ID not found in request' });
@@ -18,13 +19,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       where: { userId: req.userId },
       orderBy: { updatedAt: 'desc' },
     });
-    res.json(projects);
+    return res.json(projects);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+routerProjects.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Validate userId exists
     if (!req.userId) {
@@ -51,14 +52,14 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
     });
     
-    res.json(project);
+    return res.json(project);
   } catch (error) {
     console.error('Project creation error:', error);
-    next(error);
+    return next(error);
   }
 });
 
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+routerProjects.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ error: 'User ID not found in request' });
@@ -75,13 +76,13 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       return res.status(404).json({ error: 'Project not found' });
     }
     
-    res.json(project);
+    return res.json(project);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
+routerProjects.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ error: 'User ID not found in request' });
@@ -101,10 +102,10 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       return res.status(404).json({ error: 'Project not found' });
     }
     
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
-export default router;
+export default routerProjects;
