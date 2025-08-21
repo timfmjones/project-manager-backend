@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import fs from 'fs';
 import { env } from '../env';
-import { supabase } from './supabase';
 import fetch from 'node-fetch';
 import path from 'path';
 
