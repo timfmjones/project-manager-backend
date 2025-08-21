@@ -54,47 +54,61 @@ router.post('/google', async (req, res, next) => {
   try {
     const { idToken } = googleSignInSchema.parse(req.body);
     
-    // Verify the Firebase ID token
-    const decodedToken = await verifyIdToken(idToken);
-    const { email, name, picture } = decodedToken;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'No email associated with this Google account' });
-    }
-    
-    // Check if user exists
-    let user = await prisma.user.findUnique({ where: { email } });
-    
-    if (!user) {
-      // Create new user for Google sign-in
-      // Store Google UID in a new field or use email as unique identifier
-      user = await prisma.user.create({
-        data: {
-          email,
-          passwordHash: null, // No password for Google users
-          // You might want to add these fields to your User model:
-          // googleUid: uid,
-          // displayName: name,
-          // photoUrl: picture,
-        },
+    // Check if Firebase is configured
+    try {
+      // Verify the Firebase ID token
+      const decodedToken = await verifyIdToken(idToken);
+      const { email, name, picture, uid } = decodedToken;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'No email associated with this Google account' });
+      }
+      
+      // Check if user exists
+      let user = await prisma.user.findUnique({ where: { email } });
+      
+      if (!user) {
+        // Create new user for Google sign-in
+        user = await prisma.user.create({
+          data: {
+            email,
+            passwordHash: null, // No password for Google users
+            googleUid: uid,
+            displayName: name || null,
+            photoUrl: picture || null,
+          },
+        });
+      } else if (!user.googleUid) {
+        // Link existing account with Google
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleUid: uid,
+            displayName: name || user.displayName,
+            photoUrl: picture || user.photoUrl,
+          },
+        });
+      }
+      
+      const token = generateToken(user.id);
+      return res.json({ 
+        token, 
+        user: { 
+          id: user.id, 
+          email: user.email,
+          isGoogleUser: true,
+          displayName: user.displayName || name,
+          photoUrl: user.photoUrl || picture,
+        } 
       });
-    } else if (user.passwordHash) {
-      // User exists with password (registered normally)
-      // You might want to link the Google account or handle this case differently
-      // For now, we'll allow login but you might want to merge accounts
+    } catch (firebaseError: any) {
+      if (firebaseError.message === 'Firebase is not initialized. Check your environment variables.') {
+        return res.status(503).json({ 
+          error: 'Google Sign-In is not configured. Please use email/password authentication.' 
+        });
+      }
+      throw firebaseError;
     }
-    
-    const token = generateToken(user.id);
-    return res.json({ 
-      token, 
-      user: { 
-        id: user.id, 
-        email: user.email,
-        isGoogleUser: true,
-        displayName: name,
-        photoUrl: picture,
-      } 
-    });
   } catch (error) {
     console.error('Google sign-in error:', error);
     if (error instanceof Error && error.message === 'Invalid authentication token') {
