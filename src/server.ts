@@ -2,8 +2,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
 import { errorHandler } from './middleware/error';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
@@ -23,15 +21,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || env.PORT || 3001;
 const isDevelopment = process.env.NODE_ENV === 'development';
-
-// Only create uploads directory if using local storage
-if (!env.USE_SUPABASE_STORAGE) {
-  const uploadsDir = path.join(__dirname, '..', env.UPLOAD_DIR);
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  app.use('/uploads', express.static(uploadsDir));
-}
 
 // CORS configuration for production
 const corsOptions = {
@@ -69,7 +58,7 @@ app.get('/health', (_req, res) => {
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     supabase: env.SUPABASE_URL ? 'configured' : 'not configured',
-    storage: env.USE_SUPABASE_STORAGE ? 'supabase' : 'local',
+    storage: 'in-memory (audio not stored)',
     firebase: env.FIREBASE_PROJECT_ID ? 'configured' : 'not configured',
   });
 });
@@ -121,7 +110,7 @@ process.on('SIGTERM', () => {
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`💾 Storage: ${env.USE_SUPABASE_STORAGE ? 'Supabase' : 'Local'}`);
+  console.log(`💾 Storage: Audio transcribed in-memory (not stored)`);
   console.log(`🔗 Connected to Supabase: ${env.SUPABASE_URL}`);
   console.log(`🔐 Firebase: ${env.FIREBASE_PROJECT_ID ? 'Configured' : 'Not configured'}`);
   if (process.env.FRONTEND_URL) {

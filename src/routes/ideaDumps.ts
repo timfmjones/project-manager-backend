@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { upload, handleSupabaseUpload } from '../middleware/upload';
+import { upload, processAudioWithoutStorage } from '../middleware/upload';
 import { createTextIdeaDumpSchema } from '../validators/ideaDump';
-import { transcribeAudio, generateInsight } from '../config/openai';
+import { transcribeAudioFromBuffer, generateInsight } from '../config/openai';
 
 const router = Router();
 
@@ -61,12 +61,12 @@ router.post(
   '/:id/idea-dumps/audio',
   authenticateToken,
   upload.single('file'),
-  handleSupabaseUpload,
-  async (req: AuthRequest & { audioUrl?: string }, res, next) => {
+  processAudioWithoutStorage,
+  async (req: AuthRequest & { audioBuffer?: Buffer }, res, next) => {
     try {
       const projectId = req.params.id;
       
-      if (!req.file) {
+      if (!req.file || !req.audioBuffer) {
         return res.status(400).json({ error: 'No audio file provided' });
       }
       
@@ -78,18 +78,16 @@ router.post(
         return res.status(404).json({ error: 'Project not found' });
       }
       
-      // Use Supabase URL or local path
-      const audioUrl = req.audioUrl || `/uploads/${req.file.filename}`;
-      const filePathOrUrl = req.audioUrl || req.file.path;
+      // Transcribe the audio from buffer (no storage)
+      const transcript = await transcribeAudioFromBuffer(req.audioBuffer, req.file.originalname);
       
-      const transcript = await transcribeAudio(filePathOrUrl);
-      
+      // Create idea dump with transcript only (no audioUrl)
       const ideaDump = await prisma.ideaDump.create({
         data: {
           projectId,
           userId: req.userId!,
-          audioUrl,
           transcript,
+          // Not storing audioUrl anymore
         },
       });
       

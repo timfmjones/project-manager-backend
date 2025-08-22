@@ -17,11 +17,6 @@ export const env = {
   PORT: process.env.PORT || 3001,
   NODE_ENV: process.env.NODE_ENV || 'development',
   
-  // Storage
-  UPLOAD_DIR: process.env.UPLOAD_DIR || 'uploads',
-  USE_SUPABASE_STORAGE: process.env.USE_SUPABASE_STORAGE === 'true',
-  SUPABASE_STORAGE_BUCKET: process.env.SUPABASE_STORAGE_BUCKET || 'audio-uploads',
-  
   // Firebase configuration (optional)
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,

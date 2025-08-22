@@ -1,45 +1,29 @@
 import OpenAI from 'openai';
-import fs from 'fs';
 import { env } from '../env';
-import fetch from 'node-fetch';
+import { Readable } from 'stream';
 import path from 'path';
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
 
-export async function transcribeAudio(filePathOrUrl: string): Promise<string> {
-  let audioFile: any;
-  let filename = 'audio.webm'; // Default filename
-  
-  if (env.USE_SUPABASE_STORAGE && filePathOrUrl.startsWith('http')) {
-    // Download file from Supabase Storage
-    const response = await fetch(filePathOrUrl);
-    const buffer = await response.buffer();
-    
-    // Try to extract file extension from URL
-    const urlPath = new URL(filePathOrUrl).pathname;
-    const ext = path.extname(urlPath);
-    if (ext) {
-      filename = `audio${ext}`;
-    }
-    
-    // Create a File-like object for OpenAI
-    // OpenAI Whisper supports webm format
-    audioFile = new File([buffer], filename, { 
-      type: response.headers.get('content-type') || 'audio/webm' 
-    });
-  } else {
-    // Use local file
-    // Get the file extension for proper MIME type
-    const ext = path.extname(filePathOrUrl);
-    filename = `audio${ext || '.webm'}`;
-    audioFile = fs.createReadStream(filePathOrUrl);
-  }
-
+export async function transcribeAudioFromBuffer(buffer: Buffer, originalFilename?: string): Promise<string> {
   try {
+    // Determine filename and extension
+    let filename = 'audio.webm';
+    if (originalFilename) {
+      const ext = path.extname(originalFilename);
+      filename = `audio${ext || '.webm'}`;
+    }
+
+    // Convert Buffer to a File-like object for OpenAI
+    // OpenAI needs a File or Blob with a name property
+    const file = new File([buffer], filename, {
+      type: 'audio/webm',
+    });
+
     const response = await openai.audio.transcriptions.create({
-      file: audioFile,
+      file: file,
       model: 'whisper-1',
       // Optional: add language hint if you know the language
       // language: 'en',
