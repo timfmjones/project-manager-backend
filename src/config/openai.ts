@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 import { env } from '../env';
-import { Readable } from 'stream';
 import path from 'path';
 
 const openai = new OpenAI({
