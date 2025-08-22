@@ -1,28 +1,32 @@
-import * as admin from 'firebase-admin';
+import { initializeApp, cert, getApps, App, ServiceAccount } from 'firebase-admin/app';
+import { getAuth, Auth } from 'firebase-admin/auth';
 import { env } from '../env';
 
 // Initialize Firebase Admin SDK
-let isInitialized = false;
-let authInstance: admin.auth.Auth | null = null;
+let firebaseApp: App | null = null;
+let authInstance: Auth | null = null;
 
 function initializeFirebase() {
-  if (!isInitialized && env.FIREBASE_PROJECT_ID && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+  if (!firebaseApp && env.FIREBASE_PROJECT_ID && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
     try {
-      if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
-            projectId: env.FIREBASE_PROJECT_ID,
-            clientEmail: env.FIREBASE_CLIENT_EMAIL,
-            // Replace escaped newlines in private key
-            privateKey: env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          }),
+      const apps = getApps();
+      if (apps.length === 0) {
+        const serviceAccount: ServiceAccount = {
+          projectId: env.FIREBASE_PROJECT_ID,
+          clientEmail: env.FIREBASE_CLIENT_EMAIL,
+          // Replace escaped newlines in private key
+          privateKey: env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        };
+
+        firebaseApp = initializeApp({
+          credential: cert(serviceAccount),
         });
+        
         console.log('Firebase Admin initialized successfully');
-        authInstance = admin.auth();
-        isInitialized = true;
+        authInstance = getAuth(firebaseApp);
       } else {
-        authInstance = admin.auth();
-        isInitialized = true;
+        firebaseApp = apps[0];
+        authInstance = getAuth(firebaseApp);
       }
     } catch (error) {
       console.error('Firebase Admin initialization error:', error);
@@ -35,8 +39,8 @@ function initializeFirebase() {
 initializeFirebase();
 
 // Export a getter for auth that ensures initialization
-export function getAuth(): admin.auth.Auth | null {
-  if (!isInitialized) {
+export function getFirebaseAuth(): Auth | null {
+  if (!authInstance) {
     initializeFirebase();
   }
   return authInstance;
@@ -46,7 +50,7 @@ export function getAuth(): admin.auth.Auth | null {
  * Verify a Firebase ID token
  */
 export async function verifyIdToken(idToken: string) {
-  const auth = getAuth();
+  const auth = getFirebaseAuth();
   if (!auth) {
     throw new Error('Firebase is not initialized. Check your environment variables.');
   }
@@ -64,7 +68,7 @@ export async function verifyIdToken(idToken: string) {
  * Get or create a user from Firebase token
  */
 export async function getFirebaseUser(uid: string) {
-  const auth = getAuth();
+  const auth = getFirebaseAuth();
   if (!auth) {
     throw new Error('Firebase is not initialized. Check your environment variables.');
   }
