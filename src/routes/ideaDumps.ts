@@ -37,6 +37,16 @@ router.post('/:id/idea-dumps/text', authenticateToken, async (req: AuthRequest, 
         recommendations: insightData.recommendations || [],
         suggestedTasks: insightData.suggestedTasks || [],
       },
+      include: {
+        ideaDump: {
+          select: {
+            contentText: true,
+            transcript: true,
+            audioUrl: true,
+            createdAt: true,
+          },
+        },
+      },
     });
     
     if (insightData.suggestedTasks && Array.isArray(insightData.suggestedTasks)) {
@@ -51,7 +61,13 @@ router.post('/:id/idea-dumps/text', authenticateToken, async (req: AuthRequest, 
       await prisma.task.createMany({ data: tasks });
     }
     
-    return res.json({ ideaDump, insight });
+    // Return the insight with ideaDump data included, matching the format expected by frontend
+    return res.json({ 
+      ideaDump, 
+      insight,
+      // Also return tasks if they were created
+      createdTasks: insightData.suggestedTasks?.length || 0
+    });
   } catch (error) {
     return next(error);
   }
@@ -100,6 +116,16 @@ router.post(
           recommendations: insightData.recommendations || [],
           suggestedTasks: insightData.suggestedTasks || [],
         },
+        include: {
+          ideaDump: {
+            select: {
+              contentText: true,
+              transcript: true,
+              audioUrl: true,
+              createdAt: true,
+            },
+          },
+        },
       });
       
       if (insightData.suggestedTasks && Array.isArray(insightData.suggestedTasks)) {
@@ -114,7 +140,13 @@ router.post(
         await prisma.task.createMany({ data: tasks });
       }
       
-      return res.json({ ideaDump, insight });
+      // Return the insight with ideaDump data included, matching the format expected by frontend
+      return res.json({ 
+        ideaDump, 
+        insight,
+        // Also return tasks if they were created
+        createdTasks: insightData.suggestedTasks?.length || 0
+      });
     } catch (error) {
       return next(error);
     }
