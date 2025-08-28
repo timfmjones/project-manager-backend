@@ -1,4 +1,4 @@
-// src/server.ts
+// src/server.ts - Complete server file with Q&A routes
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,6 +14,7 @@ import taskRoutesIndividual from './routes/taskRoutes';
 import milestoneRoutes from './routes/milestones';
 import milestoneRoutesIndividual from './routes/milestoneRoutes';
 import aiRoutes from './routes/ai';
+import qaRoutes from './routes/qa';
 import { env } from './env';
 
 dotenv.config();
@@ -81,6 +82,9 @@ app.use('/api/tasks', taskRoutesIndividual);        // PATCH/DELETE /api/tasks/:
 app.use('/api/milestones', milestoneRoutesIndividual); // PATCH/DELETE /api/milestones/:id
 app.use('/api/insights', insightRoutesIndividual);    // PATCH /api/insights/:id/pin
 
+// Q&A feedback route (not under /api/projects)
+app.use('/api', qaRoutes);                    // PATCH /api/qa/:id/feedback
+
 // Project-related routes (all under /api/projects)
 app.use('/api/projects', projectRoutes);      // GET/POST/PATCH /api/projects
 app.use('/api/projects', summaryRoutes);      // GET/PATCH /api/projects/:id/summary
@@ -89,6 +93,7 @@ app.use('/api/projects', insightRoutes);      // GET /api/projects/:id/insights
 app.use('/api/projects', tasksRoutes);        // GET/POST /api/projects/:id/tasks
 app.use('/api/projects', milestoneRoutes);    // GET/POST /api/projects/:id/milestones
 app.use('/api/projects', aiRoutes);           // POST /api/projects/:id/summary/suggest
+app.use('/api/projects', qaRoutes);           // POST /api/projects/:id/qa/ask, GET /api/projects/:id/qa/history
 
 // 404 handler
 app.use((_req, res) => {
@@ -113,6 +118,7 @@ const server = app.listen(PORT, () => {
   console.log(`💾 Storage: Audio transcribed in-memory (not stored)`);
   console.log(`🔗 Connected to Supabase: ${env.SUPABASE_URL}`);
   console.log(`🔐 Firebase: ${env.FIREBASE_PROJECT_ID ? 'Configured' : 'Not configured'}`);
+  console.log(`🤖 Q&A Feature: Enabled`);
   if (process.env.FRONTEND_URL) {
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
   }

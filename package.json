@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Project Management Backend with Supabase",
+  "description": "Project Management Backend with Supabase and AI Q&A",
   "main": "dist/server.js",
   "engines": {
     "node": ">=18.0.0"
@@ -19,7 +19,8 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:introspect": "prisma db pull"
+    "prisma:introspect": "prisma db pull",
+    "migrate:qa": "prisma migrate dev --name add_qa_feature"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",

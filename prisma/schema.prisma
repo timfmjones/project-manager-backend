@@ -1,3 +1,4 @@
+// prisma/schema.prisma - Complete schema with Q&A feature
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
@@ -32,6 +33,7 @@ model Project {
   ideaDumps     IdeaDump[]
   tasks         Task[]
   milestones    Milestone[]
+  qaQuestions   QAQuestion[]
 
   @@index([userId])
 }
@@ -95,4 +97,19 @@ model Milestone {
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+}
+
+model QAQuestion {
+  id          String    @id @default(uuid())
+  projectId   String
+  question    String
+  answer      String    @db.Text
+  suggestions Json      // Array of follow-up suggestions
+  examples    Json?     // Array of real-world examples
+  helpful     Boolean?  // User feedback on helpfulness
+  createdAt   DateTime  @default(now())
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdAt])
 }

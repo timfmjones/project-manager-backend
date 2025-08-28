@@ -1,3 +1,4 @@
+// src/config/openai.ts - Complete file with Q&A functionality
 import OpenAI from 'openai';
 import { env } from '../env';
 import path from 'path';
@@ -110,5 +111,120 @@ export async function suggestSummaryUpdate(recentInsights: any[]): Promise<strin
   } catch (error) {
     console.error('Summary suggestion error:', error);
     return '';
+  }
+}
+
+// Q&A Feature Functions
+interface ProjectContext {
+  name: string;
+  summary: string;
+  stats: {
+    totalTasks: number;
+    completedTasks: number;
+    totalInsights: number;
+    upcomingMilestones: number;
+  };
+  recentTasks: Array<{
+    title: string;
+    status: string;
+    description?: string | null;
+  }>;
+  upcomingMilestones: Array<{
+    title: string;
+    description?: string | null;
+    dueDate?: Date | null;
+  }>;
+  recentInsights: Array<{
+    summary: any;
+    recommendations: any;
+    suggestedTasks: any;
+    source?: string | null;
+    date: Date;
+  }>;
+}
+
+export async function generateQAResponse(
+  question: string,
+  context: ProjectContext,
+  includeExamples: boolean = true
+): Promise<{
+  answer: string;
+  suggestions: string[];
+  examples?: string[];
+  suggestedTasks?: Array<{ title: string; description?: string }>;
+}> {
+  const systemPrompt = `You are an expert project management advisor with deep knowledge of best practices from companies like Google, Amazon, and successful startups. 
+
+Given a project's context and a user's question, provide:
+1. A direct, actionable answer based on their project data
+2. 2-3 follow-up suggestions or questions
+3. ${includeExamples ? 'Real-world examples from successful projects/companies' : 'Focus only on their specific project'}
+4. If relevant, suggest 1-2 specific tasks they should create
+
+Project Context:
+- Project: ${context.name}
+- Summary: ${context.summary || 'No summary provided'}
+- Progress: ${context.stats.completedTasks}/${context.stats.totalTasks} tasks completed
+- Insights generated: ${context.stats.totalInsights}
+- Upcoming milestones: ${context.stats.upcomingMilestones}
+
+Be specific, practical, and reference their actual project data when answering.`;
+
+  const userPrompt = `Project Details:
+${JSON.stringify(context, null, 2)}
+
+User Question: ${question}
+
+Provide a response in JSON format:
+{
+  "answer": "Direct answer to their question with specific references to their project",
+  "suggestions": ["Follow-up question 1", "Follow-up question 2", "Follow-up question 3"],
+  "examples": ["Real example 1", "Real example 2"] (only if includeExamples is true),
+  "suggestedTasks": [{"title": "Task title", "description": "Brief description"}] (only if relevant)
+}`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 1500,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    // Validate response structure
+    if (!result.answer) {
+      throw new Error('Invalid AI response structure');
+    }
+    
+    return {
+      answer: result.answer,
+      suggestions: result.suggestions || [],
+      examples: includeExamples ? (result.examples || []) : undefined,
+      suggestedTasks: result.suggestedTasks || [],
+    };
+  } catch (error) {
+    console.error('Q&A generation error:', error);
+    
+    // Fallback response
+    return {
+      answer: "I'm having trouble analyzing your project right now. Based on what I can see, you have " +
+              `${context.stats.totalTasks} tasks with ${context.stats.completedTasks} completed. ` +
+              "Try asking about specific aspects of your project like task prioritization or milestone planning.",
+      suggestions: [
+        "What are my highest priority tasks?",
+        "How can I improve my project velocity?",
+        "What should I focus on this week?",
+      ],
+      examples: includeExamples ? [
+        "Many successful teams use weekly sprints to maintain momentum",
+        "Google's OKR system helps align tasks with larger goals",
+      ] : undefined,
+    };
   }
 }
